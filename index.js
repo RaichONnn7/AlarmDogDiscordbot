@@ -15,6 +15,8 @@ const TRIGGERS = (process.env.TRIGGERS || 'alarm')
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
+// SHOW_MATCH=true にすると、検知した語もスポイラー(||語||)で表示する
+const SHOW_MATCH = process.env.SHOW_MATCH === 'true';
 // 連投防止(同じチャンネルで何秒空けるか)
 const COOLDOWN_MS = Number(process.env.COOLDOWN_SECONDS || 10) * 1000;
 
@@ -41,17 +43,19 @@ client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const text = message.content.toLowerCase();
-  if (!TRIGGERS.some((t) => text.includes(t))) return;
+  const matched = TRIGGERS.find((t) => text.includes(t));
+  if (!matched) return;
 
   const now = Date.now();
   if (now - (lastSent.get(message.channelId) || 0) < COOLDOWN_MS) return;
   lastSent.set(message.channelId, now);
 
   try {
-    // 動画を添付として送る(URLの文字列は表示されない)
-    await message.channel.send({
-      content: ALERT_TEXT,
+    // 検知したメッセージへの返信として、動画を添付で送る(URLは表示されない)
+    await message.reply({
+      content: SHOW_MATCH ? `${ALERT_TEXT}\n検知した語: ||${matched}||` : ALERT_TEXT,
       files: [{ attachment: GIF_URL, name: 'alarmdog.mp4' }],
+      allowedMentions: { repliedUser: false }, // 相手に通知(メンション)を飛ばさない
     });
   } catch (err) {
     console.error('送信に失敗しました:', err.message);
