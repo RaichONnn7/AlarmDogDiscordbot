@@ -15,6 +15,14 @@ const TRIGGERS = (process.env.TRIGGERS || 'alarm')
   .split(',')
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
+// 特定の語には、別のGIFだけを返す(上から順に判定。先に当たったものが優先)
+const SPECIAL_RULES = [
+  {
+    words: ['ちんちん', 'チンチン'], // 「おちんちん」も含まれるので反応する
+    url: 'https://cultofthepartyparrot.com/parrots/hd/ultrafastparrot.gif',
+    name: 'ultrafastparrot.gif',
+  },
+];
 // SHOW_MATCH=true にすると、検知した語もスポイラー(||語||)で表示する
 const SHOW_MATCH = process.env.SHOW_MATCH === 'true';
 // 連投防止(同じチャンネルで何秒空けるか)
@@ -43,14 +51,25 @@ client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot || !message.guild) return;
 
   const text = message.content.toLowerCase();
+  const special = SPECIAL_RULES.find((r) =>
+    r.words.some((w) => text.includes(w.toLowerCase()))
+  );
   const matched = TRIGGERS.find((t) => text.includes(t));
-  if (!matched) return;
+  if (!special && !matched) return;
 
   const now = Date.now();
   if (now - (lastSent.get(message.channelId) || 0) < COOLDOWN_MS) return;
   lastSent.set(message.channelId, now);
 
   try {
+    if (special) {
+      // 特定の語: 専用のGIFだけを、検知したメッセージへの返信として送る
+      await message.reply({
+        files: [{ attachment: special.url, name: special.name }],
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
     // 検知したメッセージへの返信として、動画を添付で送る(URLは表示されない)
     await message.reply({
       content: SHOW_MATCH ? `${ALERT_TEXT}\n検知した語: ||${matched}||` : ALERT_TEXT,
