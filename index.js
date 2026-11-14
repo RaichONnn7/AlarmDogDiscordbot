@@ -8,8 +8,8 @@ const GIF_URL =
 // GIFと一緒に投稿するテキスト(.envのALERT_TEXTで変更可。\nで改行)
 const ALERT_TEXT = (
   process.env.ALERT_TEXT ||
-  ':rotating_light: :rotating_light: :rotating_light: 下ネタを検知しました:rotating_light: :rotating_light: :rotating_light:'
-).replace(/\\n/g, '\n');
+  '🚨🚨🚨 下ネタを検知しました 🚨🚨🚨'
+).replace(/\\n/g, ' ');
 // カンマ区切りで複数指定可。大文字小文字は区別しません。
 const TRIGGERS = (process.env.TRIGGERS || 'alarm')
   .split(',')
@@ -48,7 +48,8 @@ client.on(Events.MessageCreate, async (message) => {
   lastSent.set(message.channelId, now);
 
   try {
-    await message.channel.send(`${ALERT_TEXT}\n${GIF_URL}`);
+    // 文章自体をリンクにして、URLの文字列を見せない(動画プレビューは出る)
+    await message.channel.send(`[${ALERT_TEXT}](${GIF_URL})`);
   } catch (err) {
     console.error('送信に失敗しました:', err.message);
   }
