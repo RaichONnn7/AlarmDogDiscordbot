@@ -74,7 +74,6 @@ client.on(Events.MessageCreate, async (message) => {
     await message.reply({
       content: SHOW_MATCH ? `${ALERT_TEXT}\n検知した語: ||${matched}||` : ALERT_TEXT,
       files: [{ attachment: GIF_URL, name: 'alarmdog.mp4' }],
-      allowedMentions: { repliedUser: false }, // 相手に通知(メンション)を飛ばさない
     });
   } catch (err) {
     console.error('送信に失敗しました:', err.message);
