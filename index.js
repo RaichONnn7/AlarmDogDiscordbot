@@ -66,7 +66,6 @@ client.on(Events.MessageCreate, async (message) => {
       // 特定の語: 専用のGIFだけを、検知したメッセージへの返信として送る
       await message.reply({
         files: [{ attachment: special.url, name: special.name }],
-        allowedMentions: { repliedUser: false },
       });
       return;
     }
